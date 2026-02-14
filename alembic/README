@@ -1,0 +1,31 @@
+# Alembic Migration Directory
+
+This directory contains database migrations for TaskMaster.
+
+## Usage
+
+### Generate a new migration
+```bash
+alembic revision --autogenerate -m "description of changes"
+```
+
+### Apply migrations
+```bash
+alembic upgrade head
+```
+
+### Rollback one migration
+```bash
+alembic downgrade -1
+```
+
+### View migration history
+```bash
+alembic history
+```
+
+## Notes
+
+- The `env.py` file is configured to work with async SQLAlchemy
+- Database URL is read from the application settings
+- Run migrations after updating your local `.env` file
