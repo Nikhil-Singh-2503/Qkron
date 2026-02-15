@@ -24,7 +24,7 @@ settings = get_settings()
 
 
 # Load superuser secret from environment
-SUPERUSER_SECRET = "change_this_secret"
+SUPERUSER_SECRET = settings.secret_key
 
 
 @router.post(

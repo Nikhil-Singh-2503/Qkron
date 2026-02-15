@@ -13,6 +13,7 @@ from taskmaster.db.models import NotificationConfig, NotificationLog, User
 from taskmaster.schemas import (
     NotificationConfigCreate,
     NotificationConfigResponse,
+    NotificationConfigUpdate,
     NotificationLogResponse,
 )
 from taskmaster.services import NotificationService
@@ -77,6 +78,40 @@ async def get_notification_config(
         )
     )
     config = result.scalar_one_or_none()
+
+    if not config:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification configuration not found",
+        )
+
+    return config
+
+
+@router.put(
+    "/configs/{config_id}",
+    response_model=NotificationConfigResponse,
+)
+async def update_notification_config(
+    config_id: uuid.UUID,
+    config_data: NotificationConfigUpdate,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: AsyncSession = Depends(get_db),
+) -> NotificationConfig:
+    """Update a notification configuration."""
+    service = NotificationService(db)
+
+    config = await service.update_notification_config(
+        config_id=config_id,
+        user_id=current_user.id,
+        channel=config_data.channel.value if config_data.channel else None,
+        config=config_data.config,
+        task_id=config_data.task_id,
+        enabled=config_data.enabled,
+        on_success=config_data.on_success,
+        on_failure=config_data.on_failure,
+        on_start=config_data.on_start,
+    )
 
     if not config:
         raise HTTPException(

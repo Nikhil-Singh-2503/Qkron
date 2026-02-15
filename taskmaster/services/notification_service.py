@@ -28,8 +28,9 @@ class NotificationService:
         self, user_id: uuid.UUID, task_id: uuid.UUID | None = None
     ) -> list[NotificationConfig]:
         """Get notification configurations for a user."""
+        # Always include enabled configs, and optionally disabled ones
         query = select(NotificationConfig).where(
-            NotificationConfig.user_id == user_id, NotificationConfig.enabled == True
+            NotificationConfig.user_id == user_id
         )
 
         if task_id:
@@ -38,12 +39,10 @@ class NotificationService:
                 (NotificationConfig.task_id == task_id)
                 | (NotificationConfig.task_id == None)
             )
-        else:
-            # Get only global configs
-            query = query.where(NotificationConfig.task_id == None)
+        # If no task_id provided, return all configs (global + task-specific)
 
         result = await self.db.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def create_notification_config(
         self,
@@ -67,6 +66,50 @@ class NotificationService:
         )
 
         self.db.add(notification_config)
+        await self.db.commit()
+        await self.db.refresh(notification_config)
+
+        return notification_config
+
+    async def update_notification_config(
+        self,
+        config_id: uuid.UUID,
+        user_id: uuid.UUID,
+        channel: str | None = None,
+        config: dict[str, Any] | None = None,
+        task_id: uuid.UUID | None = None,
+        enabled: bool | None = None,
+        on_success: bool | None = None,
+        on_failure: bool | None = None,
+        on_start: bool | None = None,
+    ) -> NotificationConfig | None:
+        """Update an existing notification configuration."""
+        query = select(NotificationConfig).where(
+            NotificationConfig.id == config_id,
+            NotificationConfig.user_id == user_id,
+        )
+        result = await self.db.execute(query)
+        notification_config = result.scalar_one_or_none()
+
+        if not notification_config:
+            return None
+
+        # Update only provided fields
+        if channel is not None:
+            notification_config.channel = channel
+        if config is not None:
+            notification_config.config = config
+        if task_id is not None:
+            notification_config.task_id = task_id
+        if enabled is not None:
+            notification_config.enabled = enabled
+        if on_success is not None:
+            notification_config.on_success = on_success
+        if on_failure is not None:
+            notification_config.on_failure = on_failure
+        if on_start is not None:
+            notification_config.on_start = on_start
+
         await self.db.commit()
         await self.db.refresh(notification_config)
 

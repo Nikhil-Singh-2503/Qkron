@@ -5,8 +5,9 @@ from typing import Any
 
 from sqlalchemy import desc, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from taskmaster.db.models import NotificationConfig, NotificationLog, Task, TaskExecution
+from taskmaster.db.models import NotificationConfig, NotificationLog, Task, TaskExecution, User
 from taskmaster.schemas import TaskCreate, TaskExecutionStatus, TaskStatus, TaskUpdate
 
 
@@ -118,9 +119,9 @@ class TaskService:
         status: str | None = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> tuple[list[Task], int]:
+    ) -> tuple[list[dict], int]:
         """Get tasks with optional filtering."""
-        query = select(Task)
+        query = select(Task).options(selectinload(Task.owner))
         count_query = select(Task)
 
         if owner_id:
@@ -140,7 +141,34 @@ class TaskService:
         result = await self.db.execute(query)
         tasks = result.scalars().all()
 
-        return list(tasks), total
+        # Convert to dict with owner_username
+        from taskmaster.schemas import TaskResponse
+        task_responses = []
+        for task in tasks:
+            task_dict = {
+                "id": task.id,
+                "name": task.name,
+                "description": task.description,
+                "command": task.command,
+                "schedule_type": task.schedule_type,
+                "schedule": task.schedule,
+                "timezone": task.timezone,
+                "timeout": task.timeout,
+                "max_retries": task.max_retries,
+                "status": task.status,
+                "priority": task.priority,
+                "is_active": task.is_active,
+                "created_at": task.created_at,
+                "updated_at": task.updated_at,
+                "owner_id": task.owner_id,
+                "owner_username": task.owner.username if task.owner else None,
+                "metadata_info": task.metadata_info,
+                "dependencies": task.dependencies,
+                "tags": task.tags,
+            }
+            task_responses.append(task_dict)
+
+        return task_responses, total
 
     async def update_task(
         self, task_id: uuid.UUID, task_data: TaskUpdate

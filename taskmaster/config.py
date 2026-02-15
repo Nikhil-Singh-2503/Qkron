@@ -36,7 +36,11 @@ class Settings(BaseSettings):
     # API
     api_v1_prefix: str = "/api/v1"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://localhost:5173",
+    ]
 
     # Scheduler
     scheduler_max_workers: int = 10

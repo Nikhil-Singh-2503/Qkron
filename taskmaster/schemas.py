@@ -78,6 +78,7 @@ class TaskResponse(TaskBase):
     created_at: datetime
     updated_at: datetime
     owner_id: UUID
+    owner_username: str | None = None
 
 
 class TaskListResponse(BaseModel):
@@ -223,6 +224,18 @@ class NotificationConfigBase(BaseModel):
 class NotificationConfigCreate(NotificationConfigBase):
     """Notification configuration creation schema."""
 
+    task_id: UUID | None = None
+
+
+class NotificationConfigUpdate(BaseModel):
+    """Notification configuration update schema."""
+
+    channel: NotificationChannel | None = None
+    enabled: bool | None = None
+    on_success: bool | None = None
+    on_failure: bool | None = None
+    on_start: bool | None = None
+    config: dict[str, Any] | None = None
     task_id: UUID | None = None
 
 

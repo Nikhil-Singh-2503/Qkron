@@ -4,12 +4,24 @@ Industry-Grade Task Scheduling and Execution System built with FastAPI.
 
 ## Features
 
+### Backend (FastAPI)
 - **Task Management**: Create, read, update, delete tasks with full CRUD operations
 - **Flexible Scheduling**: Support for cron expressions and interval-based scheduling
 - **Async Execution**: High-performance asynchronous task execution engine
 - **PostgreSQL Database**: Persistent storage with SQLAlchemy 2.0 async ORM
 - **Security**: JWT authentication with role-based access control
 - **API-First**: RESTful API with OpenAPI documentation
+- **Task Dependencies**: Define dependencies between tasks
+- **Notification System**: Email, SMS (Twilio), and Webhook notifications
+
+### Frontend (React + TypeScript)
+- **Modern UI**: React 19 with TypeScript and Tailwind CSS
+- **Dashboard**: Overview with task statistics and recent activity
+- **Task Management**: Visual interface for creating and managing scheduled tasks
+- **Notification Configuration**: Configure and test email, SMS, and webhook notifications
+- **User Management**: Admin interface for user management
+- **Responsive Design**: Works on desktop and mobile devices
+- **Toast Notifications**: Real-time feedback for user actions
 
 ## Prerequisites
 
@@ -151,6 +163,123 @@ docker-compose down
 
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
+
+---
+
+## Frontend Setup (React + TypeScript)
+
+QKron includes a modern React frontend with TypeScript, Tailwind CSS, and Vite.
+
+### Prerequisites
+
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm** - Comes with Node.js
+
+### Installation
+
+#### Step 1: Navigate to Frontend Directory
+
+```bash
+cd frontend
+```
+
+#### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+#### Step 3: Configure Environment Variables
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env file with your API URL
+# For local backend:
+VITE_API_URL=http://localhost:8000/api/v1
+
+# For production backend:
+VITE_API_URL=https://your-api-domain.com/api/v1
+```
+
+> **Important**: The environment variable must start with `VITE_` to be accessible in Vite. The default API URL is `http://localhost:8000/api/v1`.
+
+#### Step 4: Run the Development Server
+
+```bash
+npm run dev
+```
+
+The frontend will be available at: **http://localhost:5173**
+
+#### Step 5: Build for Production
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist/` directory.
+
+### Frontend Features
+
+- **React 19** with TypeScript
+- **Tailwind CSS** for styling
+- **React Router** for navigation
+- **Axios** for API requests
+- **Radix UI** components
+- **Lucide React** icons
+- **Toast Notifications**
+- **Responsive Design**
+
+### Frontend Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Login | `/login` | User authentication |
+| Dashboard | `/` | Overview with task statistics |
+| Tasks | `/tasks` | Task list with CRUD operations |
+| Task Detail | `/tasks/:id` | Task details and executions |
+| Create Task | `/tasks/new` | Create new scheduled task |
+| Edit Task | `/tasks/:id/edit` | Edit existing task |
+| Notifications | `/notifications` | Notification configs and logs |
+| Users | `/users` | User management (admin only) |
+
+### Frontend Architecture
+
+```
+src/
+├── components/
+│   ├── layout/       # Layout, Header, Footer
+│   └── ui/           # Reusable UI components
+├── contexts/         # React contexts (Auth, Toast)
+├── pages/            # Page components
+├── services/         # API service layer
+├── types/            # TypeScript interfaces
+├── App.tsx           # Main app with routes
+└── main.tsx          # Entry point
+```
+
+### Running Both Frontend and Backend
+
+#### Option 1: Run Separately
+
+```bash
+# Terminal 1: Backend
+cd /path/to/QKron
+uvicorn taskmaster.main:app --reload
+
+# Terminal 2: Frontend
+cd frontend
+npm run dev
+```
+
+- Backend API: http://localhost:8000
+- Frontend: http://localhost:5173
+
+#### Option 2: Production Build with Reverse Proxy
+
+Deploy the frontend `dist/` folder alongside the backend and configure a reverse proxy (Nginx, Caddy) to route API requests to the backend.
 
 ---
 
