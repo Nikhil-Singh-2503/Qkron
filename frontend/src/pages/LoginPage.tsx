@@ -21,7 +21,7 @@ export default function LoginPage() {
 
         try {
             await login(username, password);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError('Invalid username or password');
         } finally {

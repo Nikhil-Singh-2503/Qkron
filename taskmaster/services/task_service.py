@@ -73,6 +73,13 @@ class TaskService:
             if not dep_task:
                 return False, f"Dependency task not found: {dep_id}"
 
+            # Check if dependency task is active (enabled)
+            if not dep_task.is_active:
+                return (
+                    False,
+                    f"Dependency '{dep_task.name}' is disabled (is_active=False)",
+                )
+
             if dep_task.status != TaskStatus.COMPLETED.value:
                 return (
                     False,
@@ -105,6 +112,7 @@ class TaskService:
                             "task_id": str(dep_task.id),
                             "name": dep_task.name,
                             "status": dep_task.status,
+                            "is_active": dep_task.is_active,
                             "completed": dep_task.status == TaskStatus.COMPLETED.value,
                         }
                     )

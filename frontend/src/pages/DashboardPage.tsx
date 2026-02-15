@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { LoadingScreen } from '@/components/ui/loading-spinner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { tasksApi, type Task } from '@/services/api';
 import { AlertCircle, CheckCircle, Clock, Loader2, Pause, Play, Plus, Terminal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -17,6 +18,7 @@ export default function DashboardPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { confirm, ConfirmDialog } = useConfirm();
+    const { showToast } = useToast();
 
     useEffect(() => {
         loadTasks();
@@ -37,9 +39,12 @@ export default function DashboardPage() {
         setExecutingTaskId(taskId);
         try {
             await tasksApi.executeTask(taskId);
+            showToast('Task executed successfully', 'success');
             await loadTasks();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to execute task:', error);
+            const errorMessage = error?.response?.data?.detail || 'Failed to execute task';
+            showToast(errorMessage, 'error');
         } finally {
             setExecutingTaskId(null);
         }

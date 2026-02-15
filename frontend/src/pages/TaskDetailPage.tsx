@@ -3,38 +3,47 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { LoadingScreen } from '@/components/ui/loading-spinner';
-import { tasksApi, type Task, type TaskExecution } from '@/services/api';
-import { Bell, CheckCircle, Clock, Edit, Link as LinkIcon, Loader2, Play, Terminal, Trash2, XCircle } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
+import { tasksApi, type Task, type TaskDependency, type TaskExecution } from '@/services/api';
+import { Bell, CheckCircle, ChevronLeft, ChevronRight, Clock, Edit, Link as LinkIcon, Loader2, Play, Terminal, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function TaskDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [task, setTask] = useState<Task | null>(null);
     const [executions, setExecutions] = useState<TaskExecution[]>([]);
-    const [dependencies, setDependencies] = useState<string[]>([]);
+    const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [executing, setExecuting] = useState(false);
+    const [executionsPage, setExecutionsPage] = useState(1);
+    const [executionsTotal, setExecutionsTotal] = useState(0);
+    const executionsPageSize = 10;
     const { confirm, ConfirmDialog } = useConfirm();
 
     useEffect(() => {
         loadTask();
-    }, [id]);
+    }, [id, executionsPage]);
 
     const loadTask = async () => {
         try {
             const [taskData, executionsData, depsData] = await Promise.all([
                 tasksApi.getTask(id!),
-                tasksApi.getTaskExecutions(id!),
+                tasksApi.getTaskExecutions(id!, { page: executionsPage, page_size: executionsPageSize }),
                 tasksApi.getTaskDependencies(id!),
             ]);
             setTask(taskData);
-            setExecutions(executionsData.items);
+            setExecutions(executionsData.items || []);
+            setExecutionsTotal(executionsData.total || 0);
             setDependencies(depsData.dependencies || []);
-        } catch (error) {
-            console.error('Failed to load task:', error);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to load task:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load task');
         } finally {
             setLoading(false);
         }
@@ -44,9 +53,12 @@ export default function TaskDetailPage() {
         setExecuting(true);
         try {
             await tasksApi.executeTask(id!);
+            showToast('Task execution started', 'success');
             await loadTask();
         } catch (error) {
             console.error('Failed to execute task:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to execute task';
+            showToast(errorMessage, 'error');
         } finally {
             setExecuting(false);
         }
@@ -64,7 +76,7 @@ export default function TaskDetailPage() {
 
         try {
             await tasksApi.deleteTask(id!);
-            navigate('/');
+            navigate('/dashboard');
         } catch (error) {
             console.error('Failed to delete task:', error);
         }
@@ -99,6 +111,16 @@ export default function TaskDetailPage() {
     if (loading) {
         return (
             <LoadingScreen text="Loading task details..." />
+        );
+    }
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+                    <div className="text-red-400 text-lg">Error: {error}</div>
+                </div>
+            </Layout>
         );
     }
 
@@ -217,15 +239,16 @@ export default function TaskDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">
-                                    {dependencies.map((depId) => (
+                                    {dependencies.map((dep) => (
                                         <Button
-                                            key={depId}
+                                            key={dep.task_id}
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => navigate(`/tasks/${depId}`)}
-                                            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                                            onClick={() => navigate(`/tasks/${dep.task_id}`)}
+                                            className={`border-slate-600 hover:bg-slate-700 hover:text-white ${dep.is_active ? 'text-slate-300' : 'text-red-400'
+                                                }`}
                                         >
-                                            Task #{depId}
+                                            {dep.name} ({dep.status}) {!dep.is_active && '- Disabled'}
                                         </Button>
                                     ))}
                                 </div>
@@ -244,24 +267,56 @@ export default function TaskDetailPage() {
                             {executions.length === 0 ? (
                                 <p className="text-slate-400 text-center py-8">No executions yet</p>
                             ) : (
-                                <div className="space-y-3">
-                                    {executions.map((execution) => (
-                                        <div
-                                            key={execution.id}
-                                            className="flex items-center justify-between p-3 bg-slate-900 rounded-lg"
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                {getExecutionStatusIcon(execution.status)}
-                                                <div>
-                                                    <div className="text-white capitalize">{execution.status}</div>
-                                                    <div className="text-sm text-slate-400">
-                                                        {new Date(execution.started_at).toLocaleString()}
+                                <>
+                                    <div className="space-y-3">
+                                        {executions.map((execution) => (
+                                            <div
+                                                key={execution.id}
+                                                className="flex items-center justify-between p-3 bg-slate-900 rounded-lg"
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    {getExecutionStatusIcon(execution.status)}
+                                                    <div>
+                                                        <div className="text-white capitalize">{execution.status}</div>
+                                                        <div className="text-sm text-slate-400">
+                                                            {new Date(execution.start_time).toLocaleString()}
+                                                        </div>
+                                                        {execution.error && (
+                                                            <div className="text-sm text-red-400 mt-1">
+                                                                {execution.error}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
+                                        ))}
+                                    </div>
+                                    {executionsTotal > executionsPageSize && (
+                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setExecutionsPage(p => Math.max(1, p - 1))}
+                                                disabled={executionsPage === 1}
+                                            >
+                                                <ChevronLeft className="h-4 w-4 mr-1" />
+                                                Previous
+                                            </Button>
+                                            <span className="text-sm text-slate-400">
+                                                Page {executionsPage} of {Math.ceil(executionsTotal / executionsPageSize)}
+                                            </span>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setExecutionsPage(p => p + 1)}
+                                                disabled={executionsPage >= Math.ceil(executionsTotal / executionsPageSize)}
+                                            >
+                                                Next
+                                                <ChevronRight className="h-4 w-4 ml-1" />
+                                            </Button>
                                         </div>
-                                    ))}
-                                </div>
+                                    )}
+                                </>
                             )}
                         </CardContent>
                     </Card>

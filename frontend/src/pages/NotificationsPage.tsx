@@ -264,7 +264,7 @@ export default function NotificationsPage() {
             <header className="bg-slate-800 border-b border-slate-700">
                 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <Button variant="ghost" onClick={() => navigate('/')} className="text-slate-300">
+                        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-300">
                             ← Back
                         </Button>
                         <h1 className="text-2xl font-bold text-white">Notifications</h1>

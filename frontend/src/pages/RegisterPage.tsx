@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
         try {
             await register(email, username, password);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError('Registration failed. Please try again.');
         } finally {

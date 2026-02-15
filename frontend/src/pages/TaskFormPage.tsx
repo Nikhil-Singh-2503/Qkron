@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingScreen } from '@/components/ui/loading-spinner';
-import { tasksApi, type ScheduleType } from '@/services/api';
-import { Clock, Loader2, Plus, Terminal, X } from 'lucide-react';
+import { tasksApi, type ScheduleType, type Task } from '@/services/api';
+import { Clock, Loader2, Terminal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -24,17 +24,32 @@ export default function TaskFormPage() {
     const [maxRetries, setMaxRetries] = useState(3);
     const [priority, setPriority] = useState(5);
     const [dependencies, setDependencies] = useState<string[]>([]);
-    const [newDependency, setNewDependency] = useState('');
+    const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
     const [isActive, setIsActive] = useState(true);
     const [loading, setLoading] = useState(isEditing);
+    const [tasksLoading, setTasksLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        loadAvailableTasks();
         if (id) {
             loadTask();
         }
     }, [id]);
+
+    const loadAvailableTasks = async () => {
+        try {
+            const response = await tasksApi.getTasks({ page_size: 100 });
+            // Filter out the current task when editing
+            const tasks = response.items.filter(t => t.id !== id);
+            setAvailableTasks(tasks);
+        } catch (err) {
+            console.error('Failed to load tasks:', err);
+        } finally {
+            setTasksLoading(false);
+        }
+    };
 
     // Reset schedule value when schedule type changes
     useEffect(() => {
@@ -74,15 +89,19 @@ export default function TaskFormPage() {
         }
     };
 
-    const handleAddDependency = () => {
-        if (newDependency.trim() && !dependencies.includes(newDependency.trim())) {
-            setDependencies([...dependencies, newDependency.trim()]);
-            setNewDependency('');
+    const handleAddDependency = (taskId: string) => {
+        if (taskId && !dependencies.includes(taskId)) {
+            setDependencies([...dependencies, taskId]);
         }
     };
 
     const handleRemoveDependency = (dep: string) => {
         setDependencies(dependencies.filter(d => d !== dep));
+    };
+
+    const getTaskName = (taskId: string) => {
+        const task = availableTasks.find(t => t.id === taskId);
+        return task ? task.name : taskId;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -111,7 +130,7 @@ export default function TaskFormPage() {
                 await tasksApi.createTask(taskData);
             }
 
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError('Failed to save task');
         } finally {
@@ -306,45 +325,52 @@ export default function TaskFormPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="dependency" className="text-slate-300">Dependencies</Label>
                                 <p className="text-sm text-slate-500 mb-2">
-                                    Task IDs that must complete before this task runs
+                                    Select tasks that must complete before this task runs
                                 </p>
-                                <div className="flex gap-2">
-                                    <Input
-                                        id="dependency"
-                                        type="text"
-                                        placeholder="Enter task ID"
-                                        value={newDependency}
-                                        onChange={(e) => setNewDependency(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleAddDependency();
-                                            }
-                                        }}
-                                        className="bg-slate-700 border-slate-600 text-white"
-                                    />
-                                    <Button type="button" onClick={handleAddDependency}>
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                {dependencies.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {dependencies.map((dep) => (
-                                            <span
-                                                key={dep}
-                                                className="inline-flex items-center gap-1 bg-slate-700 text-white px-3 py-1 rounded-full text-sm"
-                                            >
-                                                {dep}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveDependency(dep)}
-                                                    className="hover:text-red-400"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
+                                {tasksLoading ? (
+                                    <p className="text-sm text-slate-500">Loading tasks...</p>
+                                ) : (
+                                    <>
+                                        <select
+                                            id="dependency"
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    handleAddDependency(e.target.value);
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                            className="w-full bg-slate-700 border border-slate-600 text-white rounded-md px-3 py-2"
+                                        >
+                                            <option value="">Select a task to add as dependency...</option>
+                                            {availableTasks
+                                                .filter(t => !dependencies.includes(t.id))
+                                                .map((task) => (
+                                                    <option key={task.id} value={task.id}>
+                                                        {task.name}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                        {dependencies.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {dependencies.map((dep) => (
+                                                    <span
+                                                        key={dep}
+                                                        className="inline-flex items-center gap-1 bg-slate-700 text-white px-3 py-1 rounded-full text-sm"
+                                                    >
+                                                        {getTaskName(dep)}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveDependency(dep)}
+                                                            className="hover:text-red-400"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 

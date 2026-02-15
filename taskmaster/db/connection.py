@@ -15,7 +15,7 @@ ssl_context = ssl.create_default_context()
 # Create async engine with SSL required for Supabase
 engine = create_async_engine(
     database_url,
-    echo=settings.debug,
+    echo=False,  # Set to True to see SQL queries in logs
     pool_pre_ping=True,
     connect_args={"ssl": ssl_context},  # Ensure channel binding is required
     poolclass=NullPool,  # optional, Supabase prefers short-lived connections

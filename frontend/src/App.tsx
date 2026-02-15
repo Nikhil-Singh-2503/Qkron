@@ -21,7 +21,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/landing" replace />;
   }
 
   return <>{children}</>;
@@ -47,7 +47,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
-        path="/"
+        path="/landing"
         element={
           <PublicRoute>
             <LandingPage />
