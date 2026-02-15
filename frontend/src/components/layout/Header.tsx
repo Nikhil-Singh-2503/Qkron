@@ -1,7 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import {
     Bell,
-    Clock,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Logo } from '@/components/brand/Logo';
 
 export default function Header() {
     const { user, logout } = useAuth();
@@ -34,10 +34,8 @@ export default function Header() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/dashboard" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow">
-                            <Clock className="h-5 w-5 text-white" />
-                        </div>
-                        <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                        <Logo size="md" showText={false} />
+                        <span className="font-heading text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
                             QKron
                         </span>
                     </Link>
