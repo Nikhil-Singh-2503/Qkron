@@ -27,9 +27,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     # Database
-    database_url: str = (
-        'postgresql+asyncpg://neondb_owner:npg_eK0yvLjbD6xf@ep-tiny-moon-ai9uqyir-pooler.c-4.us-east-1.aws.neon.tech/neondb'
-    )
+    database_url: str = "postgresql+asyncpg://qkron:qkron@localhost:5432/qkron_db"
     database_pool_size: int = 20
     database_max_overflow: int = 30
 
