@@ -1,11 +1,47 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QKron - Task Scheduler</title>
+  <meta name="description" content="QKron - Modern Task Scheduling and Automation Platform" />
+  <meta name="theme-color" content="#0f172a" />
+  
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Google Fonts: Inter, Space Grotesk, JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <title>QKron - Task Scheduling Platform</title>
+  
+  <style>
+    /* Critical CSS for initial load */
+    html {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    }
+    
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    
+    /* Prevent FOUC */
+    html {
+      background-color: #020617;
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
+    }
+  </style>
 </head>
 
 <body>

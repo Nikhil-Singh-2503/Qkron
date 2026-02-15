@@ -125,10 +125,25 @@ async def update_task(
 
     # Update task
     task = await service.update_task(task_id, task_data)
+    scheduler = get_scheduler()
+
+    # Handle is_active changes
+    new_is_active = task_data.is_active if task_data.is_active is not None else existing_task.is_active
+    if new_is_active != existing_task.is_active:
+        if new_is_active:
+            # Task is being enabled - add to scheduler
+            scheduler.add_task(
+                task_id=str(task_id),
+                schedule_type=ScheduleType(existing_task.schedule_type),
+                schedule=existing_task.schedule,
+                timezone=existing_task.timezone,
+            )
+        else:
+            # Task is being disabled - remove from scheduler
+            scheduler.remove_task(str(task_id))
 
     # Update scheduler if schedule changed
     if task_data.schedule_type or task_data.schedule:
-        scheduler = get_scheduler()
         scheduler.remove_task(str(task_id))
         # Ensure we pass ScheduleType enum to add_task
         sched_type = task_data.schedule_type
@@ -199,6 +214,15 @@ async def execute_task(
     # Check dependencies before execution
     deps_satisfied, deps_error = await service.check_dependencies(task_id)
     if not deps_satisfied:
+        # Create execution record with failed status for dependency failure
+        execution = await service.create_execution(
+            task_id, TaskExecutionStatus.FAILED
+        )
+        await service.update_execution(
+            execution.id,
+            status=TaskExecutionStatus.FAILED,
+            error=f"Dependencies not satisfied: {deps_error}",
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Task dependencies not satisfied: {deps_error}",

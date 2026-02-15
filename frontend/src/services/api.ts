@@ -45,9 +45,17 @@ export interface TaskExecution {
     status: TaskExecutionStatus;
     output: string | null;
     error: string | null;
-    started_at: string;
-    completed_at: string | null;
+    start_time: string;
+    end_time: string | null;
     retries: number;
+}
+
+export interface TaskDependency {
+    task_id: string;
+    name: string;
+    status: string;
+    is_active: boolean;
+    completed: boolean;
 }
 
 export type NotificationChannel = 'email' | 'sms' | 'webhook';
@@ -221,8 +229,8 @@ export const tasksApi = {
     },
 
     // Get task executions
-    getTaskExecutions: async (id: string): Promise<{ items: TaskExecution[]; total: number }> => {
-        const response = await api.get(`/tasks/${id}/executions`);
+    getTaskExecutions: async (id: string, params?: { page?: number; page_size?: number }): Promise<{ items: TaskExecution[]; total: number }> => {
+        const response = await api.get(`/tasks/${id}/executions`, { params });
         return response.data;
     },
 
@@ -233,7 +241,7 @@ export const tasksApi = {
     },
 
     // Get task dependencies
-    getTaskDependencies: async (id: string): Promise<{ dependencies: string[] }> => {
+    getTaskDependencies: async (id: string): Promise<{ dependencies: TaskDependency[] }> => {
         const response = await api.get(`/tasks/${id}/dependencies`);
         return response.data;
     },
