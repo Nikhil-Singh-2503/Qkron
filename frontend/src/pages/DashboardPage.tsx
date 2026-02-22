@@ -18,7 +18,8 @@ import {
     Trash2,
     Zap,
     Activity,
-    XCircle
+    XCircle,
+    User
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -203,6 +204,7 @@ function TaskCard({
     deleting: boolean;
 }) {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const getStatusColor = (status: Task['status']) => {
         switch (status) {
@@ -268,6 +270,13 @@ function TaskCard({
                     <CardDescription className="text-slate-400">
                         {task.description || 'No description'}
                     </CardDescription>
+                    {user?.is_superuser && task.owner_username && (
+                        <div className="flex items-center gap-2 mt-2 text-sm">
+                            <User className="h-3.5 w-3.5 text-blue-400" />
+                            <span className="text-slate-400">Owner:</span>
+                            <span className="text-blue-400 font-medium">{task.owner_username}</span>
+                        </div>
+                    )}
                 </CardHeader>
 
                 <CardContent className="space-y-4 relative z-10">
